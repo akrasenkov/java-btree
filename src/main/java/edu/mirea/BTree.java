@@ -1,11 +1,12 @@
 package edu.mirea;
 
+import java.security.Key;
 import java.util.*;
 
 import static edu.mirea.BTree.ComparsionHelper.equal;
 import static edu.mirea.BTree.ComparsionHelper.less;
 
-public class BTree {
+public class BTree<KeyType> {
 
     private static final int tFactor = 3;
     private static final int entriesArraySize = 2 * tFactor;
@@ -21,15 +22,40 @@ public class BTree {
         this.height = 0;
     }
 
-    public BTree put(Comparable... keys) {
+    public BTree addKeys(Comparable<KeyType>... keys) {
         for (Comparable key : keys) {
-            put(key);
+            addKey(key);
         }
         return this;
     }
 
-    public BTree put(Comparable key) {
+    public BTree addKey(Comparable<KeyType> key) {
         Entry entry = new Entry(key);
+        return addEntry(entry);
+    }
+
+    public BTree deleteKey(Comparable<KeyType> key) {
+        Entry<KeyType> entry = new Entry<>(key);
+        return deleteEntry(entry);
+    }
+
+    public BTree deleteEntry(Entry entry) {
+        List<Entry> entries = root.getEntriesRecursive();
+        entries.remove(entry);
+        root = new Node();
+        height = 0;
+        addEntries(entries);
+        return this;
+    }
+
+    public BTree addEntries(Iterable<Entry> entries) {
+        for (Entry entry : entries) {
+            addEntry(entry);
+        }
+        return this;
+    }
+
+    public BTree addEntry(Entry<KeyType> entry) {
         Triple<Node, Node, Node> emitted = insert(entry, root, height);
         if (emitted != null) {
             root = emitted.getCenter();
@@ -169,21 +195,12 @@ public class BTree {
     protected static class Node {
         private int entryCount;
         private int childsCount;
-        public Node parent;
         public Entry[] entries;
         public Node[] childs;
 
         public Node() {
             this.entryCount = 0;
             this.childsCount = 0;
-            this.entries = new Entry[entriesArraySize];
-            this.childs = new Node[childsArraySize];
-        }
-
-        public Node(Node parent) {
-            this.entryCount = 0;
-            this.childsCount = 0;
-            this.parent = parent;
             this.entries = new Entry[entriesArraySize];
             this.childs = new Node[childsArraySize];
         }
@@ -225,14 +242,6 @@ public class BTree {
 
         public int getChildsCount() {
             return childsCount;
-        }
-
-        public Node getParent() {
-            return parent;
-        }
-
-        public void setParent(Node parent) {
-            this.parent = parent;
         }
 
         public void setEntryCount(int entryCount) {
@@ -277,6 +286,45 @@ public class BTree {
             return Utils.setArrayToNull(childs, childsCount);
         }
 
+        public List<Entry> getEntriesRecursive() {
+            List<Entry> flatEntires = new LinkedList<>();
+            for (Entry entry : entries) {
+                if (entry != null) {
+                    flatEntires.add(entry);
+                }
+            }
+            for (Node child : childs) {
+                if (child != null) {
+                    flatEntires.addAll(child.getEntriesRecursive());
+                }
+            }
+            return flatEntires;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Node node = (Node) o;
+
+            if (entryCount != node.entryCount) return false;
+            if (childsCount != node.childsCount) return false;
+            // Probably incorrect - comparing Object[] arrays with Arrays.equals
+            if (!Arrays.equals(entries, node.entries)) return false;
+            // Probably incorrect - comparing Object[] arrays with Arrays.equals
+            return Arrays.equals(childs, node.childs);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = entryCount;
+            result = 31 * result + childsCount;
+            result = 31 * result + Arrays.hashCode(entries);
+            result = 31 * result + Arrays.hashCode(childs);
+            return result;
+        }
+
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder();
@@ -293,7 +341,7 @@ public class BTree {
         }
     }
 
-    protected static class Entry implements Comparable<Entry> {
+    protected static class Entry<KeyType> implements Comparable<Entry<KeyType>> {
         private Comparable key;
 
         public Entry(Comparable key) {
@@ -310,11 +358,26 @@ public class BTree {
         }
 
         @Override
-        public int compareTo(Entry o) {
+        public int compareTo(Entry<KeyType> o) {
             if (o == null) {
                 return 100;
             }
             return key.compareTo(o.getKey());
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Entry<?> entry = (Entry<?>) o;
+
+            return key != null ? key.equals(entry.key) : entry.key == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return key != null ? key.hashCode() : 0;
         }
     }
 
