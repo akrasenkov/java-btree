@@ -41,12 +41,7 @@ public class BTree {
     public Triple<Node, Node, Node> insert(Entry entry, Node node, int height) {
         int insertPos = findPosToInsertOrdered(entry, node.entries, node.getEntryCount());
         if (height != 0) {
-            Triple<Node, Node, Node> emitted = null;
-            //if (insertPos != node.getEntryCount()) {
-                emitted = insert(entry, node.childs[insertPos], height - 1);
-            //} else {
-            //    emitted = insert(entry, node.childs[insertPos + 1], height - 1);
-            //}
+            Triple<Node, Node, Node> emitted = insert(entry, node.childs[insertPos], height - 1);
             if (emitted == null) {
                 return null;
             } else {
@@ -66,9 +61,7 @@ public class BTree {
         }
 
         node.entries[insertPos] = entry;
-        //if (height == 0) {
-            node.incEntryCount();
-        //}
+        node.incEntryCount();
 
         if (node.isEntriesOverfill()) {
             return split(node);
@@ -345,24 +338,6 @@ public class BTree {
         }
 
         public C getRight() {
-            return right;
-        }
-    }
-
-    public static class Pair<Left, Right> {
-        private final Left left;
-        private final Right right;
-
-        public Pair(Left left, Right right) {
-            this.left = left;
-            this.right = right;
-        }
-
-        public Left getLeft() {
-            return left;
-        }
-
-        public Right getRight() {
             return right;
         }
     }
