@@ -197,7 +197,7 @@ public class AscendingBTree<KeyType extends Comparable<KeyType>> implements Tree
         StringBuilder builder = new StringBuilder();
         builder.append("digraph g {").append("\n");
         builder.append("node [shape = record, height= .1];\n");
-        builder.append(root.toString(height, 0)).append("\n");
+        builder.append(root.toString("")).append("\n");
         builder.append("}").append("\n");
         return builder.toString();
     }
@@ -311,8 +311,8 @@ public class AscendingBTree<KeyType extends Comparable<KeyType>> implements Tree
             return result;
         }
 
-        public String toString(int height, int pos) {
-            String nodeName = "node" + String.valueOf(height) + pos;
+        public String toString(String parent) {
+            String nodeName = "node" + parent;
             final StringBuilder builder = new StringBuilder();
             builder.append(nodeName + "[label = \"<f0>");
             for (int i = 0; i < entryCount; i++) {
@@ -323,13 +323,13 @@ public class AscendingBTree<KeyType extends Comparable<KeyType>> implements Tree
             builder.append("\"];\n");
             for (int i = 0; i < childsCount; i++) {
                 if (childs[i] != null) {
-                    builder.append(childs[i].toString(height - 1, i)).append("\n");
+                    builder.append(childs[i].toString(nodeName + i)).append("\n");
                 }
             }
             for (int i = 0; i < childsCount; i++) {
                 if (childs[i] != null) {
                     builder.append(
-                            String.format("\"%s\":f%d -> node%s", nodeName, i, String.valueOf(height - 1) + i)
+                            String.format("\"%s\":f%d -> node%s", nodeName, i, nodeName + i)
                     );
                     builder.append("\n");
                 }
