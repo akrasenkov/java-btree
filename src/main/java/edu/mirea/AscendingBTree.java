@@ -1,45 +1,48 @@
 package edu.mirea;
 
-import java.security.Key;
 import java.util.*;
 
-import static edu.mirea.BTree.ComparsionHelper.equal;
-import static edu.mirea.BTree.ComparsionHelper.less;
+import static edu.mirea.Utils.ComparsionHelper.equal;
+import static edu.mirea.Utils.ComparsionHelper.less;
+import static edu.mirea.Utils.assertNotNull;
+import static edu.mirea.Utils.assertTrue;
 
-public class BTree<KeyType> {
+public class AscendingBTree<KeyType extends Comparable<KeyType>> implements Tree<KeyType> {
 
     private static final int tFactor = 3;
     private static final int entriesArraySize = 2 * tFactor;
     private static final int childsArraySize = entriesArraySize + 1;
-    private static final int maxEntiresPerNode = 2 * tFactor - 1;
-    private static final int maxChildsPerNode = maxEntiresPerNode + 1;
 
-    public Node root;
-    public int height;
+    private Node root;
+    private int height;
 
-    public BTree() {
+    public AscendingBTree() {
         this.root = new Node();
         this.height = 0;
     }
 
-    public BTree addKeys(Comparable<KeyType>... keys) {
-        for (Comparable key : keys) {
+    public AscendingBTree<KeyType> addKeys(KeyType... keys) {
+        for (KeyType key : keys) {
             addKey(key);
         }
         return this;
     }
 
-    public BTree addKey(Comparable<KeyType> key) {
+    @Override
+    public AscendingBTree<KeyType> addKey(KeyType key) {
+        assertNotNull("Null keys not supported", key);
         Entry entry = new Entry(key);
         return addEntry(entry);
     }
 
-    public BTree deleteKey(Comparable<KeyType> key) {
+    @Override
+    public AscendingBTree<KeyType> deleteKey(KeyType key) {
+        assertNotNull("Null deletion not supported", key);
         Entry<KeyType> entry = new Entry<>(key);
         return deleteEntry(entry);
     }
 
-    public BTree deleteEntry(Entry entry) {
+    private AscendingBTree<KeyType> deleteEntry(Entry<KeyType> entry) {
         List<Entry> entries = root.getEntriesRecursive();
         entries.remove(entry);
         root = new Node();
@@ -48,14 +51,14 @@ public class BTree<KeyType> {
         return this;
     }
 
-    public BTree addEntries(Iterable<Entry> entries) {
+    private AscendingBTree<KeyType> addEntries(Iterable<Entry> entries) {
         for (Entry entry : entries) {
             addEntry(entry);
         }
         return this;
     }
 
-    public BTree addEntry(Entry<KeyType> entry) {
+    private AscendingBTree<KeyType> addEntry(Entry<KeyType> entry) {
         Triple<Node, Node, Node> emitted = insert(entry, root, height);
         if (emitted != null) {
             root = emitted.getCenter();
@@ -64,7 +67,7 @@ public class BTree<KeyType> {
         return this;
     }
 
-    public Triple<Node, Node, Node> insert(Entry entry, Node node, int height) {
+    private Triple<Node, Node, Node> insert(Entry entry, Node node, int height) {
         int insertPos = findPosToInsertOrdered(entry, node.entries, node.getEntryCount());
         if (height != 0) {
             Triple<Node, Node, Node> emitted = insert(entry, node.childs[insertPos], height - 1);
@@ -95,11 +98,13 @@ public class BTree<KeyType> {
         return null;
     }
 
-    public boolean find(Comparable key) {
-        return find(key, root);
+    @Override
+    public boolean findKey(KeyType key) {
+        assertNotNull("Null keys not supported", key);
+        return findKey(key, root);
     }
 
-    private boolean find(Comparable key, Node node) {
+    private boolean findKey(KeyType key, Node node) {
         if (node.getEntryCount() == 0) {
             return false;
         }
@@ -115,14 +120,14 @@ public class BTree<KeyType> {
                     return true;
                 } else if (less(key, node.entries[pos].getKey())) {
                     Node child = node.childs[pos];
-                    boolean found = find(key, child);
+                    boolean found = findKey(key, child);
                     if (found) {
                         return true;
                     }
                 }
             }
             Node lastChild = node.childs[node.getEntryCount()];
-            return find(key, lastChild);
+            return findKey(key, lastChild);
         }
         return false;
     }
@@ -134,7 +139,7 @@ public class BTree<KeyType> {
      * @param arrayEffectiveSize number of non-null objects in entry array
      * @return position to insert
      */
-    protected static int findPosToInsertOrdered(Entry entry, Entry[] entries, int arrayEffectiveSize) {
+    private static int findPosToInsertOrdered(Entry entry, Entry[] entries, int arrayEffectiveSize) {
         for (int pos = 0; pos < arrayEffectiveSize; pos++) {
             if (less(entry, entries[pos])) {
                 return pos;
@@ -147,7 +152,7 @@ public class BTree<KeyType> {
      * Split node in half.
      * @return triple containing left, center and right nodes
      */
-    public Triple<Node, Node, Node> split(Node node) {
+    private Triple<Node, Node, Node> split(Node node) {
         int partsSize = node.getEntryCount() / 2;
         Node centerPart = new Node();
         Node rightPart = new Node();
@@ -189,7 +194,12 @@ public class BTree<KeyType> {
 
     @Override
     public String toString() {
-        return root.toString();
+        StringBuilder builder = new StringBuilder();
+        builder.append("digraph g {").append("\n");
+        builder.append("node [shape = record, height= .1];\n");
+        builder.append(root.toString(height, 0)).append("\n");
+        builder.append("}").append("\n");
+        return builder.toString();
     }
 
     protected static class Node {
@@ -212,28 +222,12 @@ public class BTree<KeyType> {
             this.childs = new Node[childsArraySize];
         }
 
-        public boolean isFullEntries() {
-            return entryCount == maxEntiresPerNode;
-        }
-
-        public boolean isFullChilds() {
-            return childsCount == maxChildsPerNode;
-        }
-
         public boolean isEntriesOverfill() {
             return entryCount == entriesArraySize;
         }
 
-        public boolean isChildsOverfill() {
-            return childsCount == childsArraySize;
-        }
-
         public boolean hasChilds() {
             return childsCount != 0;
-        }
-
-        public boolean hasEntries() {
-            return entryCount != 0;
         }
 
         public int getEntryCount() {
@@ -256,16 +250,8 @@ public class BTree<KeyType> {
             return entryCount++;
         }
 
-        public int decEntryCount() {
-            return entryCount--;
-        }
-
         public int incChildsCount() {
             return childsCount++;
-        }
-
-        public int decChildsCount() {
-            return childsCount--;
         }
 
         public int ensureChildsCount() {
@@ -325,19 +311,30 @@ public class BTree<KeyType> {
             return result;
         }
 
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("{");
-            for (Entry entry : entries) {
-                sb.append(' ').append(entry != null ? entry : 'n');
+        public String toString(int height, int pos) {
+            String nodeName = "node" + String.valueOf(height) + pos;
+            final StringBuilder builder = new StringBuilder();
+            builder.append(nodeName + "[label = \"<f0>");
+            for (int i = 0; i < entryCount; i++) {
+                if (entries[i] != null) {
+                    builder.append(String.format(" |%s|<f%d>", entries[i], i + 1));
+                }
             }
-            sb.append(" ").append("}").append(" -> [");
-            for (Node child : childs) {
-                sb.append(' ').append(child != null ? child : 'n');
+            builder.append("\"];\n");
+            for (int i = 0; i < childsCount; i++) {
+                if (childs[i] != null) {
+                    builder.append(childs[i].toString(height - 1, i)).append("\n");
+                }
             }
-            sb.append("]");
-            return sb.toString();
+            for (int i = 0; i < childsCount; i++) {
+                if (childs[i] != null) {
+                    builder.append(
+                            String.format("\"%s\":f%d -> node%s", nodeName, i, String.valueOf(height - 1) + i)
+                    );
+                    builder.append("\n");
+                }
+            }
+            return builder.toString();
         }
     }
 
@@ -379,46 +376,6 @@ public class BTree<KeyType> {
         public int hashCode() {
             return key != null ? key.hashCode() : 0;
         }
-    }
-
-    public static class Triple<A, B, C> {
-        private final A left;
-        private final B center;
-        private final C right;
-
-        public Triple(A left, B center, C right) {
-            this.left = left;
-            this.center = center;
-            this.right = right;
-        }
-
-        public A getLeft() {
-            return left;
-        }
-
-        public B getCenter() {
-            return center;
-        }
-
-        public C getRight() {
-            return right;
-        }
-    }
-
-    public static class ComparsionHelper {
-
-        public static boolean equal(Comparable object, Comparable with) {
-            return object.compareTo(with) == 0;
-        }
-
-        public static boolean more(Comparable object, Comparable than) {
-            return object.compareTo(than) > 0;
-        }
-
-        public static boolean less(Comparable object, Comparable than) {
-            return object.compareTo(than) < 0;
-        }
-
     }
 
 }

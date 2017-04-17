@@ -1,17 +1,17 @@
 package edu.mirea;
 
-/**
- * Created by senik11 on 21.03.17.
- */
 public class Utils {
 
-    public static String arrayToString(Object[] array) {
-        StringBuffer buffer = new StringBuffer("{");
-        for (Object o : array) {
-            buffer.append(" ").append(o);
+    public static void assertNotNull(String message, Object object) {
+        if (object == null) {
+            throw new IllegalArgumentException(message);
         }
-        buffer.append(" ").append("}");
-        return buffer.toString();
+    }
+
+    public static void assertTrue(String message, boolean expression) {
+        if (!expression) {
+            throw new IllegalStateException(message);
+        }
     }
 
     public static int setArrayToNull(Object[] array, int from) {
@@ -28,28 +28,19 @@ public class Utils {
         return counter;
     }
 
-    private static void swipeArrayLeft(Object[] array) {
-        Object[] swipedLeft = new Object[array.length];
-        int swipedPos = 0;
-        for (int arrayPos = 0; arrayPos < array.length; arrayPos++) {
-            if (array[arrayPos] != null) {
-                swipedLeft[swipedPos] = array[arrayPos];
-                swipedPos++;
-            }
-        }
-        array = swipedLeft; // relinking
-    }
+    public static class ComparsionHelper {
 
-    /**
-     * Поиск первого свободного места в массиве.
-     * @return первая свободная ячейка массива, или -1, если массив */
-    private static int getFreeArrayPos(Object[] array) {
-        for (int pos = 0; pos < array.length; pos++) {
-            if (array[pos] == null) {
-                return pos;
-            }
+        public static boolean equal(Comparable object, Comparable with) {
+            return object.compareTo(with) == 0;
         }
-        return -1;
-    }
 
+        public static boolean more(Comparable object, Comparable than) {
+            return object.compareTo(than) > 0;
+        }
+
+        public static boolean less(Comparable object, Comparable than) {
+            return object.compareTo(than) < 0;
+        }
+
+    }
 }
