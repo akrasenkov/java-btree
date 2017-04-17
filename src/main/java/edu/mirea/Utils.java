@@ -28,7 +28,7 @@ public class Utils {
         return counter;
     }
 
-    public static class ComparsionHelper {
+    public static class ComparisonHelper {
 
         public static boolean equal(Comparable object, Comparable with) {
             return object.compareTo(with) == 0;

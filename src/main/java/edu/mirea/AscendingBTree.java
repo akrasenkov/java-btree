@@ -2,10 +2,9 @@ package edu.mirea;
 
 import java.util.*;
 
-import static edu.mirea.Utils.ComparsionHelper.equal;
-import static edu.mirea.Utils.ComparsionHelper.less;
+import static edu.mirea.Utils.ComparisonHelper.equal;
+import static edu.mirea.Utils.ComparisonHelper.less;
 import static edu.mirea.Utils.assertNotNull;
-import static edu.mirea.Utils.assertTrue;
 
 public class AscendingBTree<KeyType extends Comparable<KeyType>> implements Tree<KeyType> {
 
@@ -170,22 +169,18 @@ public class AscendingBTree<KeyType extends Comparable<KeyType>> implements Tree
             pos2++;
         }
 
-        // перемещаем центр в новую центральную ноду
         centerPart.entries[0] = node.entries[partsSize];
         centerPart.childs[0] = node;
         centerPart.childs[1] = rightPart;
         centerPart.setEntryCount(1);
         centerPart.setChildsCount(2);
 
-        // формируем левую ноду
         node.setEntryCount(partsSize);
-        node.setChildsCount(node.hasChilds() ? partsSize + 1 : 0); // или ноль, или максимум
+        node.setChildsCount(node.hasChilds() ? partsSize + 1 : 0);
 
-        // формируем правую ноду
         rightPart.setEntryCount(partsSize - 1);
-        rightPart.setChildsCount(node.hasChilds() ? partsSize + 1 : 0); // или ноль, или максимум
+        rightPart.setChildsCount(node.hasChilds() ? partsSize + 1 : 0);
 
-        // обрезаем entries и childs
         node.truncateEntries();
         node.truncateChilds();
 
@@ -248,10 +243,6 @@ public class AscendingBTree<KeyType extends Comparable<KeyType>> implements Tree
 
         public int incEntryCount() {
             return entryCount++;
-        }
-
-        public int incChildsCount() {
-            return childsCount++;
         }
 
         public int ensureChildsCount() {
